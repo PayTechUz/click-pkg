@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 
 @dataclass
-class ClickShopApiRespone:
+class ClickShopApiResponse:
     """
     Represents a payment transaction in the CLICK system.
 
