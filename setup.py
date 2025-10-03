@@ -19,7 +19,7 @@ setup(
     python_requires='>=3.6',
 
     install_requires=[
-        'requests>=2.0,<3.0',
+        'httpx[http2]>=0.28.1,<1.0',
         "dataclasses>=0.6,<1.0; python_version<'3.7'",
     ],
 
@@ -27,10 +27,11 @@ setup(
         'django': [
             'django>=3.0,<5.0',
             'djangorestframework>=3.0,<4.0',
+            'httpx[http2]>=0.28.1,<1.0',
         ],
         'fastapi': [
             'sqlalchemy>=1.4,<3.0',
-            'httpx>=0.20,<1.0',
+            'httpx[http2]>=0.28.1,<1.0',
             'python-multipart==0.0.20',
             'pydantic>=1.8,<2.0',
         ],
