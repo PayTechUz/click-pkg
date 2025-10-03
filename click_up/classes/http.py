@@ -13,7 +13,7 @@ class Http:
     """
 
     def __init__(self):
-        self.headers = {
+        self.default_headers = {
             "Content-Type": "application/json",
             "Accept": "application/json",
         }
@@ -32,10 +32,13 @@ class Http:
         Returns:
             dict: The response from the server.
         """
-        headers = self.headers | headers
+        headers = self.default_headers | headers
         data = json.dumps(body)
         result = http_client.post(
-            url=url, headers=headers, json=data, timeout=timeout
+            url=url,
+            headers=headers,
+            json=data,
+            timeout=timeout
         )
         result.raise_for_status()
         return result.json()
