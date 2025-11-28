@@ -34,7 +34,17 @@ class ClickWebhook(APIView):
         account = self.fetch_account(params)
 
         # check 2 check perform transaction
-        self.check_perform_transaction(account, params)
+        existing_transaction = self.check_perform_transaction(account, params)
+
+        # If transaction already paid, return success response
+        if existing_transaction:
+            return Response({
+                "click_trans_id": params.click_trans_id,
+                "merchant_trans_id": existing_transaction.account_id,
+                "merchant_prepare_id": existing_transaction.id,
+                "error": 0,
+                "error_note": "success"
+            })
 
         if params.action == Action.PREPARE:
             result = self.create_transaction(account, params)
@@ -120,7 +130,8 @@ class ClickWebhook(APIView):
         except AccountModel.DoesNotExist:
             raise exceptions.AccountNotFound("Account not found")
 
-    def check_amount(self, account: AccountModel, params: ClickShopApiRequest):  # type: ignore  # noqa
+    def check_amount(self, account: AccountModel,
+                     params: ClickShopApiRequest):  # type: ignore
         """
         Validate the received amount, considering optional commission percent.
         """
@@ -137,11 +148,14 @@ class ClickWebhook(APIView):
         """
         check if transaction already exist
         """
-        if ClickTransaction.objects.filter(
+        existing_transaction = ClickTransaction.objects.filter(
             account_id=params.merchant_trans_id,
             state=ClickTransaction.SUCCESSFULLY
-        ).exists():
-            raise exceptions.AlreadyPaid("Transaction already paid")
+        ).first()
+
+        if existing_transaction:
+            return existing_transaction
+        return None
 
     def check_transaction_cancelled(self, params: ClickShopApiRequest):
         """
@@ -153,15 +167,20 @@ class ClickWebhook(APIView):
         ).exists() or int(params.error) < 0:
             raise exceptions.TransactionCancelled("Transaction cancelled")
 
-    def check_perform_transaction(self, account: AccountModel, params: ClickShopApiRequest): # type: ignore # noqa
+    def check_perform_transaction(self, account: AccountModel,
+                                  params: ClickShopApiRequest):  # type: ignore
         """
         Check perform transaction with CLICK system
         """
         self.check_amount(account, params)
-        self.check_dublicate_transaction(params)
+        existing_transaction = self.check_dublicate_transaction(params)
+        if existing_transaction:
+            return existing_transaction
         self.check_transaction_cancelled(params)
+        return None
 
-    def create_transaction(self, account: AccountModel, params: ClickShopApiRequest): # type: ignore # noqa
+    def create_transaction(self, account: AccountModel,
+                           params: ClickShopApiRequest):  # type: ignore
         """
         create transaction in your system
         """
@@ -182,7 +201,8 @@ class ClickWebhook(APIView):
             "error_note": "success"
         }
 
-    def perform_transaction(self, account: AccountModel, params: ClickShopApiRequest): # type: ignore # noqa
+    def perform_transaction(self, account: AccountModel,
+                            params: ClickShopApiRequest):  # type: ignore
         """
         perform transaction with CLICK system
         """
