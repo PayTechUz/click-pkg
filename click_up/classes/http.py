@@ -1,14 +1,19 @@
 import json
 
-from requests import request
+from httpx import Client, HTTPTransport
+
+# Global reusable sync client
+sync_http_transport = HTTPTransport(retries=3, http2=True)
+http_client = Client(timeout=10, transport=sync_http_transport)
 
 
 class Http:
     """
     A class for making HTTP requests.
     """
+
     def __init__(self):
-        self.headers = {
+        self.default_headers = {
             "Content-Type": "application/json",
             "Accept": "application/json",
         }
@@ -27,11 +32,13 @@ class Http:
         Returns:
             dict: The response from the server.
         """
-        headers = self.headers | headers
+        headers = self.default_headers | headers
         data = json.dumps(body)
-        result = request(
-            method="POST", url=url,
-            headers=headers, data=data, timeout=timeout
+        result = http_client.post(
+            url=url,
+            headers=headers,
+            json=data,
+            timeout=timeout
         )
         result.raise_for_status()
         return result.json()
